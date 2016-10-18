@@ -11,15 +11,15 @@ static int uart_putchar (char c, FILE *stream) {
 }
 
 #define LED 2
-#define high 630
-#define low  500
-
+unsigned int high = 0;
+unsigned int low = 0;
 byte led = 1;
 unsigned int thres = 630;
 byte flag = 0;
 unsigned int count = 0;
 word val = 0;
 byte before = 0;
+
 
 void setup() {
   // put your setup code here, to run once:
@@ -28,6 +28,11 @@ void setup() {
 
   fdev_setup_stream (&uartout, uart_putchar, NULL, _FDEV_SETUP_WRITE);
   stdout = &uartout;
+
+  calibration( &high, &low );
+  printf("%d, %d\n", high, low);
+
+  while(1);
 }
 
 void loop() {
