@@ -13,7 +13,6 @@ static int uart_putchar (char c, FILE *stream) {
 #define LED 2
 unsigned int high = 0;
 unsigned int low = 0;
-byte led = 1;
 unsigned int thres = 630;
 byte flag = 0;
 unsigned int count = 0;
@@ -29,15 +28,14 @@ void setup() {
   fdev_setup_stream (&uartout, uart_putchar, NULL, _FDEV_SETUP_WRITE);
   stdout = &uartout;
 
+  printf("calibration start\n");
   calibration( &high, &low );
-  printf("%d, %d\n", high, low);
+  printf("calibration end high:%d, low:%d\n", high, low);
 
-  while(1);
 }
 
 void loop() {
   // put your main code here, to run repeatedly:
-  //  Serial.println(analogRead(0));
   val =analogRead(0);
   //printf("%d\n", val);
   if ( val >= high) {

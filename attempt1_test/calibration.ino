@@ -1,3 +1,4 @@
+#define TIME 2000
 void calibration(unsigned int *high_, unsigned int *low_){
   unsigned int cab_max = 0;
   unsigned int cab_min = 0;
@@ -7,8 +8,8 @@ void calibration(unsigned int *high_, unsigned int *low_){
   cab_time = millis();
   cab_max = analogRead(0);
   cab_min = analogRead(0);
-  
-  while (  (millis()-cab_time) < 1000  ) {
+
+  while (  (millis()-cab_time) < TIME  ) {
     tmp = analogRead(0);
     
     if ( tmp > cab_max ) {
@@ -22,6 +23,7 @@ void calibration(unsigned int *high_, unsigned int *low_){
   }
 
   printf("max %u, min %u\n", cab_max, cab_min);
+  // FIX ME 重み付きでできるといい?
   *high_ = cab_max - ( cab_max - cab_min ) / 3;
   *low_ = cab_min + ( cab_max - cab_min ) / 3;
   
