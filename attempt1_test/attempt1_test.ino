@@ -20,7 +20,10 @@ word val = 0;
 byte before = 0;
 byte pri = 0;
 
-#define Debug
+//#define Debug
+#define Forward(x) analogWrite(5, x); analogWrite(6, 0);
+#define Back(x) analogWrite(5, 0); analogWrite(6, x);
+#define Stop() analogWrite(5, 0); analogWrite(6, 0);
 
 #ifndef Debug
 
@@ -67,11 +70,11 @@ void loop() {
       analogWrite(6, 0);
       printf("one rail\n");
       delay(1000);
+      analogWrite(5, 255);
+      analogWrite(6, 0);
     } 
   } else {
     pri = 0;
-    analogWrite(5, 255);
-    analogWrite(6, 0);
   }
 }
 
