@@ -1,9 +1,12 @@
 #define TIME 2000
+#define maxWeight 40
+#define minWeight 40
+
 inline void calibration(unsigned int *high_, unsigned int *low_){
-  unsigned int cab_max = 0;
-  unsigned int cab_min = 0;
-  unsigned long cab_time = 0;
-  unsigned int tmp = 0;
+  int cab_max = 0;
+  int cab_min = 0;
+  long cab_time = 0;
+  int tmp = 0;
   
   cab_time = millis();
   cab_max = analogRead(0);
@@ -24,9 +27,10 @@ inline void calibration(unsigned int *high_, unsigned int *low_){
   }
 
   printf("max %u, min %u\n", cab_max, cab_min);
-  // FIX ME 重み付きでできるといい?
-  *high_ = cab_max - ( cab_max - cab_min ) / 3;
-  *low_ = cab_min + ( cab_max - cab_min ) / 3;
+  int median = (cab_max + cab_min)/2;
+  *high_ = (cab_max - median)*maxWeight/100 + median;
+  *low_  = ((cab_min - median)*minWeight/100 + median);
+  printf("median %d, %d\n", median, (cab_min - median)*minWeight/100);
 
   Back(150);
   delay(TIME);
