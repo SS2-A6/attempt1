@@ -12,10 +12,12 @@ static int uart_putchar (char c, FILE *stream) {
 }
 
 #define LED 2
-unsigned int high = 0;
-unsigned int low = 0;
+unsigned int high1 = 0;
+unsigned int low1 = 0;
+unsigned int high2 = 0;
+unsigned int low2 = 0;
 unsigned int thres = 630;
-byte flag = 0;
+byte flag1 = 0;  // encoder1が，1:枕木上，0:枕木間
 unsigned int count = 0;
 word val1 = 0;
 word val2 = 0;
@@ -38,14 +40,16 @@ void setup() {
   stdout = &uartout;
 
   printf("calibration start\n");
-  calibration( &high, &low );
-  printf("calibration end high:%d, low:%d\n", high, low);
+  calibration( &high1, &low1, &high2, &low2 );
+  printf("calibration end high1:%d, low1:%d\n", high1, low1);
+  printf("calibration end high2:%d, low2:%d\n", high2, low2);
+  
 
   analogWrite(5, 255);
   analogWrite(6, 0);
 
   // タイマ割り込み設定
-  MsTimer2::set(50, encoder);
+  MsTimer2::set(10, encoder);
   MsTimer2::start();
 
 }
@@ -56,21 +60,31 @@ void encoder() {
 
   val1 = analogRead(0);
   val2 = analogRead(1);
-  //printf("%d %d\n", val1, val2);
-  if ( val1 >= high) {
-    if ( flag == 1 ) {
-      printf("V 0 %d\n", val1);
-      //count++;
+
+  if ( val1 >= high1 ) {
+    if ( flag1 == 1 ) {
+      printf("V 0 %d %d\n", val1, val2);
     }
-    flag = 0;
+    flag1 = 0;
   }
-  else if ( val1 <= low ) {
-    if (flag == 0) {
-      printf("^ 1 %d %d\n", val1, count);
-      count++;
+  else if ( val1 <= low1 ) {
+    if (flag1 == 0) {
+      printf("^ 1 %d %d %d\n", val1, val2, count);
+      // count++;
+      if( val2 >= high2 ) {
+        printf("Moving F \n");
+        count++;
+      }
+      else if( val2 <= low2 ) {
+        printf("Moving B \n");
+        count--;
+      }
     }
-    flag = 1;
+    flag1 = 1;
   }
+
+  
+
 
 }
 
