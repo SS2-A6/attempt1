@@ -1,5 +1,5 @@
-unsigned int countFirst = 0;
-byte flagFirst = 1;
+unsigned int countFirst = 0;  // moveFを始めた瞬間のcountを記憶
+byte flagFirst = 1;  // 0:前進未完，1:前進完了
 
 // 枕木（makuragi）の数だけ前進する関数
 void MoveF( unsigned int makuragi ) {
@@ -14,7 +14,6 @@ void MoveF( unsigned int makuragi ) {
       analogWrite(5, 0);
       analogWrite(6, 0);
       flagFirst = 1;
-      printf("one rail\n");
       
   } else {
     

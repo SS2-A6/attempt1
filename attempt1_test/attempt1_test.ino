@@ -21,7 +21,6 @@ byte flag1 = 0;  // encoder1が，1:枕木上，0:枕木間
 unsigned int count = 0;
 word val1 = 0;
 word val2 = 0;
-byte before = 0;
 byte pri = 0;
 
 //#define Debug
@@ -32,7 +31,6 @@ byte pri = 0;
 #ifndef Debug
 
 void setup() {
-  // put your setup code here, to run once:
   Serial.begin(9600);
   pinMode(LED, OUTPUT);
 
@@ -56,6 +54,7 @@ void setup() {
 
 
 // エンコーダ読み取り関数 (タイマ割り込み)
+// 位相ズレを利用した，前進or後進判定機能付
 void encoder() {
 
   val1 = analogRead(0);
@@ -83,14 +82,11 @@ void encoder() {
     flag1 = 1;
   }
 
-  
-
-
 }
 
 
+
 void loop() {
-  // put your main code here, to run repeatedly:
 
   if (count % 32 == 0) {
     if (pri == 0) {
@@ -109,13 +105,38 @@ void loop() {
 }
 
 #else
+byte flag = 0;
 void setup() {
   Serial.begin(9600);
   fdev_setup_stream (&uartout, uart_putchar, NULL, _FDEV_SETUP_WRITE);
   stdout = &uartout;
 }
 void loop() {
-  val = analogRead(0);
-  printf("%d\n", val);
+  printf("%d\t%d\n", analogRead(0), analogRead(1));
+/*
+  val1 = analogRead(0);
+  val2 = analogRead(1);
+
+  if ( val1 >= 350 ) {
+    if ( flag1 == 1 ) {
+      printf("0\t%d\n", val2 > 350 ? 0 : 100);
+    }
+    flag1 = 0;
+  }
+  else if ( val1 <= 350 ) {
+    if (flag1 == 0) {
+      printf("100\t%d\n", val2 > 350 ? 0 : 100);
+      // count++;
+      if( val2 >= high2 ) {
+        //printf("Moving F \n");
+        count++;
+      }
+      else if( val2 <= low2 ) {
+        //printf("Moving B \n");
+        count--;
+      }
+    }
+    flag1 = 1;
+  }*/
 }
 #endif

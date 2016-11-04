@@ -1,8 +1,8 @@
 #define TIME 2000
 #define maxWeight1 40
 #define minWeight1 40
-#define maxWeight2 0
-#define minWeight2 40
+#define maxWeight2 20 //-20
+#define minWeight2 20 //45
 
 inline void calibration( unsigned int *high1_, unsigned int *low1_, unsigned int *high2_, unsigned int *low2_ ){
   int cab_max1 = 0;
@@ -12,6 +12,9 @@ inline void calibration( unsigned int *high1_, unsigned int *low1_, unsigned int
   long cab_time = 0;
   int tmp1 = 0;
   int tmp2 = 0;
+  long cab_count = 0;
+  long cab_add1 = 0;
+  long cab_add2 = 0;
   
   cab_time = millis();
   cab_max1 = analogRead(0);
@@ -23,6 +26,9 @@ inline void calibration( unsigned int *high1_, unsigned int *low1_, unsigned int
   while (  (millis()-cab_time) < TIME  ) {
     tmp1 = analogRead(0);
     tmp2 = analogRead(1);
+    cab_add1 = cab_add1 + tmp1;
+    cab_add2 = cab_add2 + tmp2;
+    cab_count ++;
     
     if ( tmp1 > cab_max1 ) {
       cab_max1 = tmp1;
@@ -39,10 +45,10 @@ inline void calibration( unsigned int *high1_, unsigned int *low1_, unsigned int
   
   }
 
-  printf("max %u, min %u\n", cab_max1, cab_min1);
-  printf("max %u, min %u\n", cab_max2, cab_min2);
-  int median1 = ( cab_max1 + cab_min1 )/2;
-  int median2 = ( cab_max2 + cab_min2 )/2;
+  printf("max %u, min %u, sum %u\n", cab_max1, cab_min1, cab_add1);
+  printf("max %u, min %u, sum %u\n", cab_max2, cab_min2, cab_add2);
+  int median1 = cab_add1 / cab_count;
+  int median2 = cab_add2 / cab_count;
   *high1_ = (cab_max1 - median1)*maxWeight1/100 + median1;
   *low1_  = (cab_min1 - median1)*minWeight1/100 + median1;
   *high2_ = (cab_max2 - median2)*maxWeight2/100 + median2;

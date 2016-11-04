@@ -1,6 +1,8 @@
 #define TIME1 1000
 #define TIME2 4000
 
+//  キャリブレーションの前半TIME1で，平均値cab_halfを割り出す．
+//  後半キャリブレーションで，cab_halfを境に，大グループと小グループに分け，それぞれの平均値を求め，そこから閾値を設定．
 void calibration2( unsigned int *high_, unsigned int *low_ ) {
   unsigned long cab_time = 0;
   unsigned int tmp = 0;
