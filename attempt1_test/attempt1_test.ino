@@ -18,7 +18,7 @@ unsigned int high2 = 0;
 unsigned int low2 = 0;
 unsigned int thres = 630;
 byte flag1 = 0;  // encoder1が，1:枕木上，0:枕木間
-unsigned int count = 0;
+long count = 0;
 word val1 = 0;
 word val2 = 0;
 byte pri = 0;
@@ -62,14 +62,21 @@ void encoder() {
 
   if ( val1 >= high1 ) {
     if ( flag1 == 1 ) {
-      printf("V 0 %d %d\n", val1, val2);
+      printf("V 0 %d %d %d\n", val1, val2, count/2);
+      if( val2 >= high2 ) {
+        printf("Moving B \n");
+        count--;
+      }
+      else if( val2 <= low2 ) {
+        printf("Moving F \n");
+        count++;
+      }
     }
     flag1 = 0;
   }
   else if ( val1 <= low1 ) {
     if (flag1 == 0) {
-      printf("^ 1 %d %d %d\n", val1, val2, count);
-      // count++;
+      printf("^ 1 %d %d %d\n", val1, val2, count/2);
       if( val2 >= high2 ) {
         printf("Moving F \n");
         count++;
