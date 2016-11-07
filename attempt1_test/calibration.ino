@@ -1,8 +1,8 @@
 #define TIME 2000
-#define maxWeight1 40
-#define minWeight1 40
-#define maxWeight2 20 //-20
-#define minWeight2 20 //45
+#define maxWeight1 90
+#define minWeight1 90
+#define maxWeight2 30 //-20
+#define minWeight2 30 //45
 
 inline void calibration( unsigned int *high1_, unsigned int *low1_, unsigned int *high2_, unsigned int *low2_ ){
   int cab_max1 = 0;
