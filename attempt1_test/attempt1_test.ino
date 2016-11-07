@@ -202,7 +202,7 @@ inline void psd_enemy() {
   }
 
   // 相手との位置関係の計算
-  if ( before_enemy_flag == 1 && enemy_flag == 0 ) {
+  if ( before_enemy_flag == 1 && enemy_flag == 0 && (past_TIME > final_rail_count + rest_rail_count) ) {
     enemy_state = 1;
     before_enemy_flag = enemy_flag;
   }
@@ -273,7 +273,7 @@ void loop() {
 
   // 残り時間少なければとにかく前進．13個目のついたて検知で後進&停止．
   if (rest_TIME < deadTime) {
-    printf("!danger! stopflag = %d, end_flag = %d\n", stop_screen_flag, end_flag);
+    printf("!danger! stopflag = %d, end_flag = %d enemy_state = %d\n", stop_screen_flag, end_flag, enemy_state);
     if ( stop_screen_flag == 1 ) {
       analogWrite(5, 0);
       analogWrite(6, 255);
