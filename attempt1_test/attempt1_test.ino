@@ -23,7 +23,7 @@ word val1 = 0;
 word val2 = 0;
 byte pri = 0;
 
-#define Debug
+//#define Debug
 #define Forward(x) analogWrite(5, x); analogWrite(6, 0);
 #define Back(x) analogWrite(5, 0); analogWrite(6, x);
 #define Stop() analogWrite(5, 0); analogWrite(6, 0);
@@ -36,26 +36,30 @@ byte pri = 0;
 void setup() {
   Serial.begin(9600);
   pinMode(LED, OUTPUT);
+  pinMode(2,INPUT_PULLUP);
 
   fdev_setup_stream (&uartout, uart_putchar, NULL, _FDEV_SETUP_WRITE);
   stdout = &uartout;
 
-  printf("calibration start\n");
-  calibration ( &high1, &low1, &high2, &low2 );
-  printf("calibration end high1:%d, low1:%d\n", high1, low1);
-  printf("calibration end high2:%d, low2:%d\n", high2, low2);
+  //printf("calibration start\n");
+  //calibration ( &high1, &low1, &high2, &low2 );
+  //printf("calibration end high1:%d, low1:%d\n", high1, low1);
+  //printf("calibration end high2:%d, low2:%d\n", high2, low2);
 
-
+  printf("Hello!\n");
   analogWrite(5, 255);
-  analogWrite(6, 0);
+  analogWrite(6, 255);
 
   // タイマ割り込み設定
-  MsTimer2::set(10, encoder);
-  MsTimer2::start();
+  //MsTimer2::set(10, encoder);
+  //MsTimer2::start();
 
+  while ( digitalRead(2) ) { }
+
+  printf("start!\n");
 }
 
-#define Encoder
+//#define Encoder
 
 // エンコーダ関数 (位相差を利用した，前進or後進判定機能付)
 void encoder() {
@@ -90,6 +94,7 @@ void encoder() {
 
 
 #define final_screen_count 12  // スクリーンの最後の個数
+#define stop_screen_count 13
 byte screen_flag = 0;  //0：スクリーンなし，1：スクリーンあり
 byte before_screen_flag = 0;
 byte screen_count = 0;
@@ -97,8 +102,10 @@ unsigned int val3 = 0;
 unsigned int val3_add = 0;
 unsigned int val3_count = 0;
 unsigned int val3_ave = 0;
-unsigned int final_rail_count = 0;  // 最終スクリーンまでの枕木数
-unsigned int rest_rail_count = 0;  // 残りの枕木平均を過去データから算出
+long final_rail_count = 180000;  // 最終スクリーンまでの累積時間
+long rest_rail_count = 180000;  // 残りの予想秒数を算出
+long past_TIME;
+byte stop_screen_flag = 0;
 
 // PSDセンサでスクリーン検知・各種処理を行う関数
 inline void psd_screen() {
@@ -127,9 +134,12 @@ inline void psd_screen() {
     screen_count ++;
     printf("screen out %d\n", screen_count);
     if ( screen_count == final_screen_count ) {
-      rest_rail_count = final_rail_cal ( final_screen_count, count );
-      final_rail_count = count;
-      printf("rest_rail = %d\n", rest_rail_count );
+      rest_rail_count = final_rail_cal ( final_screen_count, past_TIME );
+      final_rail_count = past_TIME;
+      printf("rest_rail = %ld time = %ld\n", rest_rail_count, past_TIME );
+    }
+    if ( screen_count == stop_screen_count ) {
+      stop_screen_flag = 1;
     }
   }
   else if ( before_screen_flag == 0 && screen_flag == 1 ) {
@@ -142,20 +152,20 @@ inline void psd_screen() {
 
 
 
-int final_rail_cal ( byte final_screen_count_, long count_ ) {
+long final_rail_cal ( byte final_screen_count_, long count_ ) {
   switch ( final_screen_count_ ) {
     case 2:
-      return (35 - 3*1) * count_ / 3*1;
+      return (35 - 3 * 1) * count_ / (3 * 1);
     case 4:
-      return (35 - 3*2) * count_ / 3*2;
+      return (35 - 3 * 2) * count_ / (3 * 2);
     case 6:
-      return (35 - 3*5) * count_ / 3*5;
+      return (35 - 3 * 5) * count_ / (3 * 5);
     case 8:
-      return (35 - 3*6) * count_ / 3*6;
+      return (35 - 3 * 6) * count_ / (3 * 6);
     case 10:
-      return (35 - 3*9) * count_ / 3*9;
+      return (35 - 3 * 9) * count_ / (3 * 9);
     case 12:
-      return (35 - 3*10) * count_ / 3*10;
+      return (35 - 3 * 10) * count_ / (3 * 10);
   }
 }
 
@@ -205,10 +215,12 @@ inline void psd_enemy() {
 
 
 
-#define threeMIN 180000;
+#define threeMIN 180000
+#define deadTime 5000
 long rest_TIME;  // 残り時間
 long initial_TIME;  // 競技開始時間
 byte first_loop_flag = 1;  // 1：loopの1回目を表す，0：それ以降
+byte end_flag = 0;
 
 // ループ関数 (メインの動作)
 void loop() {
@@ -218,42 +230,58 @@ void loop() {
     initial_TIME = millis();
     first_loop_flag = 0;
   }
-  rest_TIME = threeMIN - ( millis() - initial_TIME );  // 残り時間を常に計算
+  past_TIME = ( millis() - initial_TIME );
+  rest_TIME = threeMIN - past_TIME;  // 残り時間を常に計算
 
   psd_screen();
   psd_enemy();
 
-  // 残り時間に余裕がある場合，次の動作を実施．
-  if ( rest_TIME > 800 ) {
+  // 残り時間に余裕があり，かつ，まだゴール直前まで到達していない場合，次の動作を実施．
+  if ( (rest_TIME > deadTime) && (past_TIME < final_rail_count + rest_rail_count) ) {
+    analogWrite(5, 255);
+    analogWrite(6, 0);
+  }
 
-    // ゴール直前&相手が未通過なら，待機．
-    if ( (count > (final_rail_count + rest_rail_count * 5 / 6)) && (enemy_state = 0) ) {
-      analogWrite(5, 0);
-      analogWrite(6, 0);
-    }
-    // ゴール直前&相手が通過済みなら，前進．ただし停止区間に入ったら停止&終了．
-    else if ( (count > (final_rail_count + rest_rail_count * 5 / 6)) && (enemy_state = 1) ) {
-      if ( count > final_rail_count + rest_rail_count + 20 ) {
+  // 残り時間に余裕があり，かつ，ゴール直前まで到達した場合，次の動作を実施．
+  else if ( (rest_TIME > deadTime) && (past_TIME > final_rail_count + rest_rail_count) ) {
+
+    printf("enemy_state %d rest time %ld\n", enemy_state, rest_TIME);
+    // 相手が前方に通過したなら前進する．
+    if ( enemy_state == 1 ) {
+      if ( stop_screen_flag == 1 ) {
+        analogWrite(5, 0);
+        analogWrite(6, 255);
+        delay(1000);
+        stop_screen_flag = 0;
+        end_flag = 1;
+      }
+      else if ( end_flag == 1 ) {
         analogWrite(5, 0);
         analogWrite(6, 0);
       }
       else {
-        analogWrite(5, 255);
+        analogWrite(5, 200);
         analogWrite(6, 0);
       }
     }
-    // それ以外ならばとりあえず前進．
+    // 相手が通過していないなら，停止し続ける．(時間が来るまで)
     else {
-      analogWrite(5, 255);
+      analogWrite(5, 0);
       analogWrite(6, 0);
     }
-
   }
 
-  // 残り時間少なければ前進．停止区間に入ったら停止&終了．
-  else {
-
-    if ( count > final_rail_count + rest_rail_count + 20 ) {
+  // 残り時間少なければとにかく前進．13個目のついたて検知で後進&停止．
+  if (rest_TIME < deadTime) {
+    printf("!danger! stopflag = %d, end_flag = %d\n", stop_screen_flag, end_flag);
+    if ( stop_screen_flag == 1 ) {
+      analogWrite(5, 0);
+      analogWrite(6, 255);
+      stop_screen_flag = 0;
+      end_flag = 1;
+      delay(1000);
+    }
+    else if ( end_flag == 1 ) {
       analogWrite(5, 0);
       analogWrite(6, 0);
     }
@@ -274,6 +302,8 @@ void setup() {
   Serial.begin(9600);
   fdev_setup_stream (&uartout, uart_putchar, NULL, _FDEV_SETUP_WRITE);
   stdout = &uartout;
+  analogWrite(5, 255);
+  analogWrite(6, 255);
 }
 void loop() {
   printf("%d\t%d\n", analogRead(0), analogRead(1));
